@@ -1,0 +1,3 @@
+<resources>
+    <bool name="use_nfc_features">true</bool>
+</resources>

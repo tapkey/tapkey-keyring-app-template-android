@@ -1,0 +1,298 @@
+name: $(Date:yyyyMMdd-HHmm)$(Rev:.rr)
+parameters:
+  - name: skipTest
+    displayName: Skip Tests
+    type: boolean
+    default: false
+  - name: buildProduction
+    displayName: Build Production Environment
+    type: boolean
+    default: true
+  - name: buildSandbox
+    displayName: Build Sanndbox Environment
+    type: boolean
+    default: true
+variables:
+
+  # Configure if google-services.json should be configured during build
+  # Use false if google-services.json is checked in in repository
+  # When true pipeline variables 'PROD_GOOGLE_SERVICE_INFO' and 'SANDBOX_GOOGLE_SERVICE_INFO' must
+  # contain the secret file name.
+  configureGoogleServices: true
+
+jobs:
+- ${{ if eq(parameters.skipTest, false)}}:
+  - job: Test_WhiteLabel_Mobile_Android
+    displayName: Test Whitelabel Mobile Android App
+    pool:
+      vmImage: 'macOS-10.15'
+    steps:
+    - checkout: self
+      fetchDepth: 10
+
+    - template: StartAndroidEmulator.yaml
+
+    - ${{ if eq(parameters.buildProduction, true)}}:
+      - ${{ if eq(variables.configureGoogleServices, true)}}:
+        - task: DownloadSecureFile@1
+          displayName: Download Prod google-services.json
+          name: ProdGoogleServiceInfo
+          inputs:
+            secureFile: $(PROD_GOOGLE_SERVICE_INFO)
+        - script: |
+            cp $(ProdGoogleServiceInfo.secureFilePath) app/app/src/prod/google-services.json
+          displayName: Copy Prod google-services.json
+
+    - ${{ if eq(parameters.buildSandbox, true)}}:
+      - ${{ if eq(variables.configureGoogleServices, true)}}:
+        - task: DownloadSecureFile@1
+          displayName: Download Sandbox google-services.json
+          name: SandboxGoogleServiceInfo
+          inputs:
+            secureFile: $(SANDBOX_GOOGLE_SERVICE_INFO)
+        - script: |
+            cp $(SandboxGoogleServiceInfo.secureFilePath) app/app/src/sandbox/google-services.json
+          displayName: Copy Sandbox google-services.json
+
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: '11'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Gradle@2
+      displayName: Run Lint
+      condition: succeeded()
+      inputs:
+        gradleWrapperFile: 'app/gradlew'
+        workingDirectory: 'app'
+        tasks: lintProdRelease :app:lint
+        options: --parallel
+    - task: PowerShell@2
+      displayName: 'Stage Lint Results'
+      inputs:
+        targetType: 'inline'
+        script: |
+          New-Item -ItemType directory -Path $(Build.ArtifactStagingDirectory)/lint -Force
+          Get-ChildItem "app/" -Recurse -Filter lint-results* | 
+          Foreach-Object {
+              Move-Item -Force -Path $_.FullName -Destination $(Build.ArtifactStagingDirectory)/lint
+          }            
+    - task: PublishPipelineArtifact@0
+      displayName: 'Store Lint Result'
+      inputs:
+        artifactName: 'Android Lint Reports'
+        targetPath: '$(Build.ArtifactStagingDirectory)/lint'
+
+    - task: Gradle@2
+      displayName: Run Unit Test
+      inputs:
+        gradleWrapperFile: 'app/gradlew'
+        workingDirectory: 'app'
+        tasks: :app:test
+        publishJUnitResults: false
+        options: -Pcoverage --parallel
+
+    - template: WaitForAndroidEmulator.yaml
+
+    - task: Gradle@2
+      displayName: Run Instrumentation Tests
+      inputs:
+        gradleWrapperFile: 'app/gradlew'
+        workingDirectory: 'app'
+        tasks: :app:connectedAndroidTest
+        publishJUnitResults: false
+        options: -Pcoverage --parallel
+
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results'
+      condition: not(canceled())
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'app/**/build/**/TEST-*.xml'
+
+    - task: Gradle@2
+      displayName: Get coverage
+      condition: not(canceled())
+      inputs:
+        gradleWrapperFile: 'app/gradlew'
+        workingDirectory: 'app'
+        tasks: :app:createProdDebugCoverageReport
+        publishJUnitResults: false
+
+    - task: PublishCodeCoverageResults@1
+      displayName: 'Publish Coverage'
+      condition: always()
+      inputs:
+        codeCoverageTool: 'JaCoCo'
+        summaryFileLocation: 'app/app/build/reports/coverage/androidTest/prod/debug/report.xml'
+        pathToSources: 'app/app/src/main/java/'
+        additionalCodeCoverageFiles: 'app/app/build/outputs/code_coverage/prodDebugAndroidTest/connected/**/*.ec'
+        failIfCoverageEmpty: true
+
+- job: Build_Whitelabel_Mobile_Android
+  displayName: Build Whitelabel Mobile Android
+  pool:
+    vmImage: 'macOS-10.15'
+  steps:
+  - checkout: self
+    fetchDepth: 10
+
+  ##
+  # Optional configuration of environment
+  ##
+  - ${{ if eq(parameters.buildProduction, true)}}:
+    - ${{ if eq(variables.configureGoogleServices, true)}}:
+      - task: DownloadSecureFile@1
+        displayName: Download Prod google-services.json
+        name: ProdGoogleServiceInfo
+        inputs:
+          secureFile: $(PROD_GOOGLE_SERVICE_INFO)
+      - script: |
+          cp $(ProdGoogleServiceInfo.secureFilePath) app/app/src/prod/google-services.json
+        displayName: Copy Prod google-services.json
+
+  - ${{ if eq(parameters.buildSandbox, true)}}:
+    - ${{ if eq(variables.configureGoogleServices, true)}}:
+      - task: DownloadSecureFile@1
+        displayName: Download Sandbox google-services.json
+        name: SandboxGoogleServiceInfo
+        inputs:
+          secureFile: $(SANDBOX_GOOGLE_SERVICE_INFO)
+      - script: |
+          cp $(SandboxGoogleServiceInfo.secureFilePath) app/app/src/sandbox/google-services.json
+        displayName: Copy Sandbox google-services.json
+  - task: PowerShell@2
+    displayName: Prepare Environment
+    inputs:
+      targetType: 'inline'
+      script: |
+        function set-configuration($env, $name, $value) {
+            if ($value) {
+                $configFile="app/app/src/$env/res/values/config.xml"
+                $xml = New-Object xml
+                $xml.PreserveWhitespace = $true
+                $xml.Load($configFile)
+                $element =  $xml.SelectSingleNode("(//string|//integer)[@name='$name']")
+                $element.InnerText = $value
+                $xml.Save($configFile)
+            }
+        }
+
+        set-configuration "prod" "sentry_dsn" $Env:PROD_SENTRY_DSN
+        set-configuration "prod" "tapkey_oauth_client_id" $Env:PROD_TAPKEY_OAUTH_CLIENT
+        set-configuration "prod" "tapkey_identity_provider_id" $Env:PROD_TAPKEY_IP_ID
+        set-configuration "prod" "tapkey_domain_id" $Env:PROD_TAPKEY_DOMAIN_ID
+        set-configuration "prod" "tk_iso7816_aid" $Env:PROD_TAPKEY_AID
+
+        set-configuration "sandbox" "sentry_dsn" $Env:SANDBOX_SENTRY_DSN
+        set-configuration "sandbox" "tapkey_oauth_client_id" $Env:SANDBOX_TAPKEY_OAUTH_CLIENT
+        set-configuration "sandbox" "tapkey_identity_provider_id" $Env:SANDBOX_TAPKEY_IP_ID
+        set-configuration "sandbox" "tapkey_domain_id" $Env:SANDBOX_TAPKEY_DOMAIN_ID
+        set-configuration "sandbox" "tk_iso7816_aid" $Env:SANDBOX_TAPKEY_AID
+  ##
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '11'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+
+  - ${{ if eq(parameters.buildProduction, true)}}:
+    - task: Gradle@2
+      displayName: Build Prod Android App
+      inputs:
+        gradleWrapperFile: 'app/gradlew'
+        workingDirectory: 'app'
+        tasks: 'app:assembleProdRelease'
+        publishJUnitResults: false
+  - ${{ if eq(parameters.buildSandbox, true)}}:
+    - task: Gradle@2
+      displayName: Build Sandbox Android App
+      inputs:
+        gradleWrapperFile: 'app/gradlew'
+        workingDirectory: 'app'
+        tasks: 'app:assembleSandboxRelease'
+        publishJUnitResults: false
+  - task: AndroidSigning@3
+    displayName: Sign Android Apps
+    inputs:
+      apkFiles: 'app/app/build/outputs/apk/*/*/*.apk'
+      apksignerKeystoreFile: '$(APK_SIGNING_KEYSTORE)'
+      apksignerKeystorePassword: '$(APK_SIGNING_KEYSTORE_PW)'
+      apksignerKeystoreAlias: '$(APK_SIGNING_KEYSTORE_ALIAS)'
+      apksignerKeyPassword: '$(APK_SIGNING_KEYSTORE_ALIAS_PW)'
+      zipalign: false
+      apksign: true
+
+  - task: PowerShell@2
+    displayName: 'Stage Android Apps'
+    inputs:
+      targetType: 'inline'
+      script: |
+        Get-ChildItem "app/app/build/outputs/apk" -Recurse -Filter *.apk | Foreach-Object {
+          $envName = $_.Directory.Parent.Name
+          New-Item -ItemType directory -Path $(Build.ArtifactStagingDirectory)/output/$envName/ -Force
+          Move-Item -Force -Path $_.FullName -Destination "$(Build.ArtifactStagingDirectory)/output/$envName/$($_.Name -replace '-unsigned','')"
+        }
+  - ${{ if eq(parameters.buildProduction, true)}}:
+    - task: Gradle@2
+      displayName: Create Prod App Bundles
+      inputs:
+        gradleWrapperFile: 'app/gradlew'
+        workingDirectory: 'app'
+        tasks: app:bundleProdRelease
+        publishJUnitResults: false
+  - ${{ if eq(parameters.buildSandbox, true)}}:
+    - task: Gradle@2
+      displayName: Create Sandbox App Bundles
+      inputs:
+        gradleWrapperFile: 'app/gradlew'
+        workingDirectory: 'app'
+        tasks: app:bundleSandboxRelease
+        publishJUnitResults: false
+
+  - task: DownloadSecureFile@1
+    displayName: 'Download Keystore'
+    name: keystore
+    inputs:
+      secureFile: '$(APK_SIGNING_KEYSTORE)'
+
+  - task: PowerShell@2
+    displayName: 'Sign App Bundles'
+    inputs:
+      targetType: 'inline'
+      script: |
+        Get-ChildItem "app/app/build/outputs/bundle/" -Recurse -Filter *.aab | 
+        Foreach-Object {
+              jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore "$(keystore.secureFilePath)" -storepass "$(APK_SIGNING_KEYSTORE_PW)" $_.FullName "$(APK_SIGNING_KEYSTORE_ALIAS)"
+        }
+
+  - task: PowerShell@2
+    displayName: 'Stage App Bundles'
+    inputs:
+      targetType: 'inline'
+      script: |
+        Get-ChildItem "app/app/build/outputs/bundle/" -Recurse -Filter *.aab | 
+        Foreach-Object {
+          $envName = $_.Directory.Name -replace '(Release)',''
+          New-Item -ItemType directory -Path $(Build.ArtifactStagingDirectory)/output/$envName/ -Force
+          Move-Item -Force -Path $_.FullName -Destination "$(Build.ArtifactStagingDirectory)/output/$envName/$($_.Name -replace '-unsigned','')"
+        }
+
+  - task: PowerShell@2
+    displayName: 'Stage Obfuscation Mapping'
+    inputs:
+      targetType: 'inline'
+      script: |
+        Get-ChildItem "app/app/build/outputs/mapping" -Recurse -Filter *mapping.txt | 
+        Foreach-Object {
+            $envName = $_.Directory.Name -replace '(Release)',''
+            New-Item -ItemType directory -Path $(Build.ArtifactStagingDirectory)/output/$envName/ -Force
+            zip -j "$(Build.ArtifactStagingDirectory)/output/$envName/$($_.BaseName).zip" $_.FullName
+        }
+
+  - task: PublishPipelineArtifact@1
+    displayName: Store Artifacts on VSTS
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)/output'
+      artifactName: 'AndroidApps'

@@ -1,0 +1,16 @@
+parameters:
+  emulatorName: 'tk_android_emulator'
+  emulatorImage: 'system-images;android-28;default;x86'
+steps:
+- script: |
+    echo "y" | $ANDROID_HOME/tools/bin/sdkmanager '${{parameters.emulatorImage}}'
+  displayName: 'Download Emulator Image'
+   
+- script: |
+    echo "no" | $ANDROID_HOME/tools/bin/avdmanager create avd -n ${{parameters.emulatorName}} -k '${{parameters.emulatorImage}}' --force
+    $ANDROID_HOME/emulator/emulator -list-avds
+  displayName: 'Create Emulator'
+
+- script: |
+    nohup $ANDROID_HOME/emulator/emulator -avd ${{parameters.emulatorName}} -no-snapshot & echo continue
+  displayName: 'Start Emulator'

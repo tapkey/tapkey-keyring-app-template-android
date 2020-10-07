@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="KeyStateIcon">
+        <attr name="state_nearby" format="boolean" />
+        <attr name="state_unlocked" format="boolean" />
+        <attr name="state_failed" format="boolean" />
+    </declare-styleable>
+</resources>

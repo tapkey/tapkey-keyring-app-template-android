@@ -1,0 +1,102 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'com.google.gms.google-services'
+
+repositories {
+    maven { url "https://maven.tapkey.com" }
+}
+
+android {
+    compileSdkVersion 31
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 31
+
+        // Version numbers are retrieved from settings.gradle
+        versionCode gradle.versionMajor * 10000000 + gradle.versionMinor * 100000 + gradle.versionRevision * 1000
+        versionName gradle.versionMajor + "." + gradle.versionMinor + "." + gradle.versionRevision
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        setProperty("archivesBaseName", "tapkey-keyring-app-template-$versionName")
+        resValue "string", "tapkey_keyring_app_template_version", gradle.tapkeyKeyringAppTemplateVersion
+    }
+
+    buildTypes {
+        debug {
+            testCoverageEnabled true
+        }
+
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    flavorDimensions "environment"
+    productFlavors {
+        prod {
+            dimension "environment"
+            applicationId "io.tapkey.wl.app"
+            manifestPlaceholders = [appAuthRedirectScheme: 'io.tapkey.wl.app']
+        }
+        sandbox {
+            dimension "environment"
+            applicationId "io.tapkey.wl.app.demo"
+            manifestPlaceholders = [appAuthRedirectScheme: 'io.tapkey.wl.app.demo']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    buildFeatures {
+        dataBinding true
+        viewBinding true
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation platform('com.google.firebase:firebase-bom:25.12.0')
+
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.4.2"
+    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.3.4'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.3.4'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation "androidx.recyclerview:recyclerview:1.1.0"
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.3.4'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.3.4'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-messaging-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'io.sentry:sentry-android:3.1.0'
+    implementation 'com.google.firebase:firebase-auth-ktx'
+    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0'
+    implementation 'net.openid:appauth:0.7.1'
+
+    api 'com.tapkey.android:Tapkey.MobileLib:2.21.2.2'
+    api 'com.tapkey.android:Tapkey.Fcm:2.21.2.2'
+
+    kapt "com.android.databinding:compiler:3.1.4"
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation 'androidx.test.ext:junit-ktx:1.1.3'
+    androidTestImplementation 'androidx.test:core-ktx:1.4.0'
+}

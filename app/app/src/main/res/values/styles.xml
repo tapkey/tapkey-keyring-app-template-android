@@ -1,0 +1,58 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/primaryColor</item>
+        <item name="colorPrimaryDark">@color/primaryDarkColor</item>
+        <item name="colorAccent">@color/secondaryColor</item>
+        <item name="android:editTextColor">@color/primaryTextColor</item>
+        <item name="titleTextColor">@color/primaryTextColor</item>
+        <item name="android:textColorSecondary">@color/secondaryTextColor</item>
+        <item name="android:textColorPrimary">@color/primaryTextColor</item>
+        <item name="android:textColorHint">@color/primaryTextHintColor</item>
+        <item name="itemTextAppearance">@style/TextAppearanceBlack</item>
+    </style>
+
+    <style name="AppThemeDark" parent="AppTheme">
+        <item name="android:windowBackground">@color/primaryColor</item>
+        <item name="android:textColor">@color/primaryTextColor</item>
+        <item name="android:textColorSecondary">@color/secondaryTextColor</item>
+        <item name="android:buttonStyle">@style/ButtonTextStyle</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="AppTheme">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppThemeDark.NoActionBar" parent="AppThemeDark">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="ButtonTextStyle" parent="AppTheme">
+        <item name="android:buttonStyle">@style/Widget.AppCompat.Button.Borderless.Colored</item>
+        <item name="colorControlHighlight">@color/secondaryColor</item>
+        <item name="colorAccent">@color/secondaryColor</item>
+        <item name="android:textColor">@color/button_text_colors</item>
+        <item name="textAllCaps">true</item>
+        <item name="colorButtonNormal">#ccc</item>
+    </style>
+
+    <style name="ButtonTextStyleOnWhite" parent="ButtonTextStyle">
+        <item name="android:textColor">@color/button_white_text_colors</item>
+    </style>
+
+    <style name="TextAppearanceBlack">
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="AlertDialog" parent="Base.Theme.AppCompat.Light.Dialog">
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="ActionBarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
+        <item name="colorControlNormal">@color/primaryTextColor</item>
+    </style>
+
+</resources>

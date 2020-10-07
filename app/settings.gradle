@@ -1,0 +1,11 @@
+include ':app'
+rootProject.name = "Tapkey Keyring App Template"
+
+// The version of this app. Change when releasing a new app
+gradle.ext.versionMajor = 0
+gradle.ext.versionMinor = 1
+gradle.ext.versionRevision = 0
+
+// The version of the Tapkey Keyring App Template for Android this app is based on.
+// Don't modify this value. This value will change when merging a newer Tapkey Keyring App Template for Android version
+gradle.ext.tapkeyKeyringAppTemplateVersion = "1.2.0"

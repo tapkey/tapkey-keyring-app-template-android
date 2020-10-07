@@ -1,0 +1,13 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:drawable="@drawable/ic_circle_grey"
+        android:gravity="fill" />
+    <item
+        android:bottom="10dp"
+        android:drawable="@drawable/ic_key_colored"
+        android:gravity="center"
+        android:left="10dp"
+        android:right="10dp"
+        android:top="10dp" />
+
+</layer-list>

@@ -1,0 +1,44 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dip"
+    android:background="?android:attr/selectableItemBackground"
+    android:theme="@style/AppTheme">
+
+    <io.tapkey.wl.app.ui.keys.KeyStateIcon
+        android:id="@+id/icon"
+        android:layout_width="48sp"
+        android:layout_height="48sp"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="16dip"
+        android:src="@drawable/lock_state" />
+
+    <TextView
+        android:id="@+id/first_line"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_above="@id/first_line"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_toEndOf="@id/icon"
+        android:gravity="center_vertical"
+        tools:text="Example application"
+        android:textColor="@android:color/black"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/second_line"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/first_line"
+        android:layout_toEndOf="@id/icon"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textColor="#84000000"
+        tools:text="Restriction"
+        android:textSize="14sp" />
+
+</RelativeLayout>

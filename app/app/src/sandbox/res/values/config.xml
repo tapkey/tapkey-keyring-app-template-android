@@ -1,0 +1,11 @@
+<resources>
+    <string name="sentry_dsn" translatable="false"></string>
+    <string name="tapkey_base_uri" translatable="false">https://my.sandbox.tapkey.io</string>
+    <string name="tapkey_authorization_endpoint" translatable="false">https://login.sandbox.tapkey.io</string>
+    <integer name="tapkey_domain_id">0xff02</integer>
+    <string name="tapkey_v1_ble_service_uuid" translatable="false">6e65742e-7470-6b79-2ea0-000006060142</string>
+    <string name="tapkey_oauth_client_id" translatable="false"></string>
+    <string name="tapkey_identity_provider_id" translatable="false"></string>
+
+    <string name="tk_iso7816_aid" translatable="false"></string>
+</resources>

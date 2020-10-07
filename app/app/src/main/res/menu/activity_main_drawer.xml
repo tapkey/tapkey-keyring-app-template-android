@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_keys"
+            android:icon="@drawable/ic_key"
+            android:title="@string/menu_keys" />
+        <item
+            android:id="@+id/nav_about"
+            android:icon="@drawable/ic_info"
+            android:title="@string/menu_about" />
+        <item
+            android:id="@+id/nav_sign_out"
+            android:icon="@drawable/ic_login"
+            android:onClick="signOut"
+            android:title="@string/menu_sign_out" />
+    </group>
+</menu>
