@@ -48,6 +48,7 @@ import com.tapkey.mobile.manager.CommandExecutionFacade
 import com.tapkey.mobile.manager.triggerLock
 import com.tapkey.mobile.model.CommandResult
 import com.tapkey.mobile.model.KeyDetails
+import com.tapkey.mobile.model.UserGrant
 import io.tapkey.util.MessageResolver
 import io.tapkey.wl.app.R
 import io.tapkey.wl.app.util.AnalyticsEvents
@@ -55,7 +56,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
-import net.tpky.mc.model.Grant
 
 /**
  * Adapter for the KeyRing RecyclerView
@@ -320,7 +320,7 @@ class KeysListAdapter(private val context: Context, private val scope: Coroutine
         context.startActivity(intent)
     }
 
-    private fun hasKeyUnlimitedValidity(grant: Grant): Boolean {
+    private fun hasKeyUnlimitedValidity(grant: UserGrant): Boolean {
         return grant.validBefore == null && grant.validFrom == null && grant.timeRestrictionIcal == null
     }
 
