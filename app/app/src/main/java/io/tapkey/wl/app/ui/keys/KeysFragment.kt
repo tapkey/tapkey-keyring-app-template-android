@@ -52,7 +52,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tapkey.mobile.ble.BleLockScanner
 import com.tapkey.mobile.manager.NotificationManager
 import com.tapkey.mobile.manager.pollForNotifications
-import com.tapkey.mobile.manager.queryLocalKeys
 import com.tapkey.mobile.model.KeyDetails
 import com.tapkey.mobile.utils.ObserverRegistration
 import io.sentry.Sentry
@@ -129,16 +128,7 @@ class KeysFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
             }
         }
 
-        lifecycleScope.launch {
-            binding.keysList.visibility = View.GONE
-            binding.loadingCircle.visibility = View.VISIBLE
-
-            refreshKeys()
-
-            binding.loadingCircle.visibility = View.GONE
-            binding.keysList.visibility = View.VISIBLE
-        }
-
+        refreshKeys()
     }
 
     override fun onResume() {
@@ -297,17 +287,11 @@ class KeysFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
         binding.accessLocationContainer.visibility = if (isShown) View.VISIBLE else View.GONE
     }
 
-    private suspend fun refreshKeys() {
+    private fun refreshKeys() {
         val sf = (activity?.application as App).tapkeyServiceFactory
         val users = sf.userManager.users
 
-        val list: List<KeyDetails> = try {
-            if (users.size > 0) sf.keyManager.queryLocalKeys(users[0]) else ArrayList()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to query local keys: ", e)
-            Sentry.captureException(e)
-            ArrayList()
-        }
+        val list: List<KeyDetails> = if (users.size > 0) sf.keyManager.getLocalKeys(users[0]) else ArrayList()
 
         val keyDetailsArrayList = ArrayList<NearbyKey>()
         for (key in list) {
@@ -322,9 +306,7 @@ class KeysFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
                 pinnedKeys.add(key.grant.boundLock.physicalLockId)
                 return@NearbyKey {
                     pinnedKeys.remove(key.grant.boundLock.physicalLockId)
-                    lifecycleScope.launch {
-                        refreshKeys()
-                    }
+                    refreshKeys()
                 }
             })
         }
@@ -343,7 +325,6 @@ class KeysFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
         lifecycleScope.launch {
             val sf = (activity?.application as App).tapkeyServiceFactory
             sf.notificationManager.pollForNotifications()
-            refreshKeys()
             binding.swipeContainer.isRefreshing = false
         }
     }

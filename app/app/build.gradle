@@ -89,8 +89,8 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0'
     implementation 'net.openid:appauth:0.7.1'
 
-    api 'com.tapkey.android:Tapkey.MobileLib:2.21.2.2'
-    api 'com.tapkey.android:Tapkey.Fcm:2.21.2.2'
+    api 'com.tapkey.android:Tapkey.MobileLib:2.28.0.3'
+    api 'com.tapkey.android:Tapkey.Fcm:2.28.0.3'
 
     kapt "com.android.databinding:compiler:3.1.4"
 
