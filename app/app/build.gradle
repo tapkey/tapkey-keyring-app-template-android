@@ -34,6 +34,8 @@ android {
         }
     }
 
+    namespace 'io.tapkey.wl.app'
+
     flavorDimensions "environment"
     productFlavors {
         prod {
