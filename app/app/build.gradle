@@ -8,11 +8,11 @@ repositories {
 }
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 33
 
         // Version numbers are retrieved from settings.gradle
         versionCode gradle.versionMajor * 10000000 + gradle.versionMinor * 100000 + gradle.versionRevision * 1000
